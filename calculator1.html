@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simple Calculator</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #eef2f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  #calculator {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
+    width: 280px;
+  }
+  #display {
+    background: #222;
+    color: #0f0;
+    font-size: 2rem;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: right;
+    user-select: none;
+    overflow-x: auto;
+  }
+  .buttons {
+    margin-top: 15px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  button {
+    padding: 14px;
+    font-size: 1.4rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: #d4d4d8;
+    transition: background-color 0.3s;
+  }
+  button.operator {
+    background-color: #ff9500;
+    color: white;
+  }
+  button.equal {
+    background-color: #34c759;
+    color: white;
+    grid-column: span 2;
+  }
+  button.clear {
+    background-color: #ff3b30;
+    color: white;
+  }
+  button:hover {
+    filter: brightness(0.9);
+  }
+</style>
+</head>
+<body>
+
+<div id="calculator" role="application">
+  <div id="display" aria-live="polite" aria-atomic="true">0</div>
+  <div class="buttons">
+    <button class="clear" id="clear">C</button>
+    <button class="operator" data-value="/">÷</button>
+    <button class="operator" data-value="*">×</button>
+    <button class="operator" data-value="-">-</button>
+
+    <button data-value="7">7</button>
+    <button data-value="8">8</button>
+    <button data-value="9">9</button>
+    <button class="operator" data-value="+">+</button>
+
+    <button data-value="4">4</button>
+    <button data-value="5">5</button>
+    <button data-value="6">6</button>
+    <button class="equal" id="equals">=</button>
+
+    <button data-value="1">1</button>
+    <button data-value="2">2</button>
+    <button data-value="3">3</button>
+
+    <button data-value="0" style="grid-column: span 2;">0</button>
+    <button data-value=".">.</button>
+  </div>
+</div>
+
+<script>
+  const display = document.getElementById('display');
+  const buttons = document.querySelectorAll('button');
+  let input = '';
+
+  function calculate(expr) {
+    try {
+      if (/^[/*+]/.test(expr) || /[/*+-.]$/.test(expr)) return 'Error';
+      const result = Function(`"use strict";return (${expr})`)();
+      if (result === Infinity || result === -Infinity || isNaN(result)) return 'Error';
+      return result;
+    } catch {
+      return 'Error';
+    }
+  }
+
+  function updateDisplay() {
+    if (!input) {
+      display.textContent = '0';
+      return;
+    }
+    const calc = calculate(input);
+    display.textContent = calc === 'Error' ? input : calc;
+  }
+
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      if (button.id === 'clear') {
+        input = '';
+        updateDisplay();
+        return;
+      }
+      if (button.id === 'equals') {
+        const calc = calculate(input);
+        display.textContent = calc;
+        input = calc === 'Error' ? '' : calc.toString();
+        return;
+      }
+      const val = button.getAttribute('data-value');
+      if (val) {
+        // Prevent multiple operators in a row
+        if (/[+-*/.]/.test(val) && /[+-*/.]$/.test(input)) {
+          input = input.slice(0, -1);
+        }
+        input += val;
+        updateDisplay();
+      }
+    });
+  });
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if ((e.key >= '0' && e.key <= '9') || ['+', '-', '*', '/', '.'].includes(e.key)) {
+      // Prevent multiple operators in a row
+      if (/[+-*/.]/.test(e.key) && /[+-*/.]$/.test(input)) {
+        input = input.slice(0, -1);
+      }
+      input += e.key;
+      updateDisplay();
+    } else if (e.key === 'Enter' || e.key === '=') {
+      e.preventDefault();
+      const calc = calculate(input);
+      display.textContent = calc;
+      input = calc === 'Error' ? '' : calc.toString();
+    } else if (e.key === 'Backspace') {
+      input = input.slice(0, -1);
+      updateDisplay();
+    } else if (e.key === 'Escape') {
+      input = '';
+      updateDisplay();
+    }
+  });
+</script>
+
+</body>
+</html>
